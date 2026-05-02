@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess.com AI Player</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 320px;
+      min-height: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+      padding: 15px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #4CAF50;
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      color: #4CAF50;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .status-section {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-label {
+      color: #aaa;
+    }
+    
+    .status-value {
+      color: #4CAF50;
+      font-weight: 600;
+    }
+    
+    .status-value.inactive {
+      color: #ff4757;
+    }
+    
+    .control-section {
+      margin-bottom: 15px;
+    }
+    
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 12px 15px;
+      margin-bottom: 10px;
+    }
+    
+    .toggle-label {
+      font-size: 14px;
+      color: white;
+    }
+    
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #333;
+      transition: .4s;
+      border-radius: 26px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 10px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: #aaa;
+      border: 2px solid #333;
+    }
+    
+    .btn-secondary:hover {
+      border-color: #4CAF50;
+      color: #4CAF50;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .instructions {
+      background: rgba(76, 175, 80, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 11px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+    
+    .instructions strong {
+      color: #4CAF50;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #333;
+      border-radius: 50%;
+      border-top-color: #4CAF50;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 10000;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateX(100px);
+      transition: all 0.3s ease;
+    }
+    
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>♟️ Chess.com AI</h1>
+    <p>Stockfish depth 25 on chess.com</p>
+  </div>
+  
+  <div class="status-section">
+    <div class="status-item">
+      <span class="status-label">AI Status</span>
+      <span class="status-value inactive" id="aiStatus">Inactive</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Current Page</span>
+      <span class="status-value" id="pageStatus">Loading...</span>
+    </div>
+    <div class="status-item" id="gameStatus" style="display: none;">
+      <span class="status-label">Game State</span>
+      <span class="status-value" id="gameStateValue">-</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Engine</span>
+      <span class="status-value">Stockfish · Depth 25</span>
+    </div>
+  </div>
+  
+    <div class="toggle-container">
+      <span class="toggle-label">Enable AI</span>
+      <label class="toggle">
+        <input type="checkbox" id="aiToggle">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="control-group" style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 15px; margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-size: 14px;">Stockfish Depth</span>
+        <span id="depthVal" style="color: #4CAF50; font-weight: 600;">15</span>
+      </div>
+      <input type="range" id="stockfishDepth" min="10" max="25" value="15" style="width: 100%; cursor: pointer; accent-color: #4CAF50;">
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-top: 5px;">
+        <span>Fast</span>
+        <span>Strong</span>
+    </div>
+
+    <div class="control-group" style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 15px; margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-size: 14px;">Think Time (Max)</span>
+        <span id="timeVal" style="color: #4CAF50; font-weight: 600;">2s</span>
+      </div>
+      <input type="range" id="stockfishTime" min="500" max="5000" step="500" value="2000" style="width: 100%; cursor: pointer; accent-color: #4CAF50;">
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-top: 5px;">
+        <span>Aggressive (0.5s)</span>
+        <span>Careful (5s)</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="makeMoveBtn">
+    Make AI Move
+  </button>
+  
+  <button class="btn btn-secondary" id="refreshBtn">
+    Refresh Status
+  </button>
+  
+  <div class="instructions">
+    <strong>How to use:</strong>
+    <ol style="margin-top: 5px; padding-left: 15px;">
+      <li>Open a game on chess.com</li>
+      <li>Enable the AI toggle</li>
+      <li>AI will play automatically on its turn</li>
+      <li>Click "Make AI Move" for manual control</li>
+    </ol>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

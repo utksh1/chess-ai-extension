@@ -1,0 +1,19 @@
+{
+  "name": "chess-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test/smoke.test.js",
+    "check": "node --check index.js && node --check game-manager.js && node --check chess-ai.js && node --check src/chrome-extension/background.js && node --check src/chrome-extension/content.js && node --check src/chrome-extension/popup.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "readline-sync": "^1.4.10"
+  }
+}
